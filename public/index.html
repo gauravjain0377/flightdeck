@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flightdeck — bot fleet observability</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--p:#2B62FF;--p2:#1F4FE0;--pl:#EEF3FF;--pb:#D6E2FF;--bg:#F6F8FC;--card:#fff;--ink:#0B1220;--mut:#5B6577;--line:#E5E9F2;--ok:#12A150;--okb:#E7F7EE;--bad:#E5484D;--badb:#FDECEC;--warn:#B7791F;--warnb:#FFF6E0;
+--sh:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);--sh2:0 12px 40px rgba(16,24,40,.14)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px}
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+aside{background:#fff;border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;padding:0 8px 22px}
+.logo i{width:30px;height:30px;border-radius:9px;background:var(--p);display:grid;place-items:center;box-shadow:0 4px 12px rgba(43,98,255,.35)}
+.logo i b{width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.3)}
+nav button{display:flex;width:100%;align-items:center;gap:10px;padding:9px 10px;border:0;background:none;border-radius:9px;color:var(--mut);font:500 14px Inter;cursor:pointer;margin-bottom:2px;text-align:left}
+nav button:hover{background:var(--bg);color:var(--ink)}nav button.on{background:var(--pl);color:var(--p)}
+nav svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.foot{margin-top:auto;font-size:12px;color:var(--mut);padding:12px;background:var(--bg);border-radius:10px;line-height:1.45}
+main{padding:28px 36px 60px;max-width:1180px;width:100%}
+h1{font-size:22px;margin:0;letter-spacing:-.02em}.sub{color:var(--mut);margin:4px 0 22px}
+.row{display:flex;gap:12px;align-items:center}.sp{flex:1}
+.btn{border:0;border-radius:10px;padding:9px 16px;font:600 13px Inter;cursor:pointer;background:var(--p);color:#fff;box-shadow:0 2px 8px rgba(43,98,255,.3);transition:.15s}
+.btn:hover{background:var(--p2)}.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}.btn.ghost:hover{border-color:var(--p);color:var(--p)}.btn.sm{padding:5px 11px;font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat{padding:16px 18px}.stat small{color:var(--mut);font-weight:500}.stat b{display:block;font-size:26px;letter-spacing:-.02em;margin-top:2px}.stat span{font-size:12px;color:var(--mut)}
+.launch{padding:20px;margin-bottom:18px;display:grid;grid-template-columns:1.1fr 1fr;gap:22px}
+label{font-size:12px;font-weight:600;color:var(--mut);display:block;margin-bottom:6px}
+input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:14px Inter;outline:0;background:#fff}input:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--pb)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.chip{padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;font:500 12.5px Inter;color:var(--mut)}.chip.on{background:var(--pl);border-color:var(--p);color:var(--p)}
+pre{margin:0;background:#0B1220;color:#DCE6FF;border-radius:12px;padding:14px;overflow:auto;font:12px/1.6 'JetBrains Mono',monospace}pre .k{color:#7FA2FF}pre .s{color:#8EE6B0}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;color:var(--mut);font-weight:600;padding:12px 18px;border-bottom:1px solid var(--line)}td{padding:13px 18px;border-bottom:1px solid var(--line);vertical-align:middle}tr:last-child td{border:0}tbody tr{cursor:pointer;transition:.12s}tbody tr:hover{background:#FAFBFF}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--bg);color:var(--mut)}
+.pill.rec{background:var(--pl);color:var(--p)}.pill.ok{background:var(--okb);color:var(--ok)}.pill.bad{background:var(--badb);color:var(--bad)}.pill.warn{background:var(--warnb);color:var(--warn)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}.pulse{animation:pl 1.4s infinite}@keyframes pl{50%{opacity:.25}}
+.plat{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;background:var(--pl);color:var(--p);font-weight:700;font-size:12px}
+.mut{color:var(--mut)}
+.ov{position:fixed;inset:0;background:rgba(11,18,32,.28);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.2s;z-index:20}.ov.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(600px,100%);background:#fff;box-shadow:var(--sh2);transform:translateX(100%);transition:.25s cubic-bezier(.3,.8,.3,1);z-index:21;display:flex;flex-direction:column}.drawer.on{transform:none}
+.dh{padding:22px 24px 16px;border-bottom:1px solid var(--line)}.db{padding:20px 24px;overflow:auto;flex:1}
+.steps{display:flex;margin:18px 0 4px}.stp{flex:1;text-align:center;position:relative;font-size:11px;color:var(--mut)}
+.stp:before{content:'';position:absolute;top:10px;left:-50%;right:50%;height:2px;background:var(--line)}.stp:first-child:before{display:none}
+.stp i{position:relative;z-index:1;display:grid;place-items:center;width:22px;height:22px;margin:0 auto 6px;border-radius:50%;background:#fff;border:2px solid var(--line);font-style:normal;font-size:11px;color:#fff}
+.stp.ok i{background:var(--p);border-color:var(--p)}.stp.ok:before,.stp.now:before{background:var(--p)}.stp.now i{border-color:var(--p);box-shadow:0 0 0 4px var(--pb)}.stp.bad i{background:var(--bad);border-color:var(--bad)}.stp.bad{color:var(--bad)}.stp.ok,.stp.now{color:var(--ink)}
+.diag{border:1px solid #F6C9CB;background:#FFF8F8;border-radius:12px;padding:14px 16px;margin:16px 0}.diag b{color:var(--bad)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:18px 0 14px}.tab{padding:8px 12px;border:0;background:none;font:600 13px Inter;color:var(--mut);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}.tab.on{color:var(--p);border-color:var(--p)}
+.share{display:flex;height:8px;border-radius:99px;overflow:hidden;margin:8px 0 6px;background:var(--line)}.leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--mut);margin-bottom:16px}.leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.ln{display:flex;gap:12px;padding:9px 0}.av{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-weight:600;font-size:11px}
+.ln.ov2{margin-left:18px;border-left:2px dashed var(--pb);padding-left:12px}.badge{font-size:10.5px;background:var(--warnb);color:var(--warn);padding:1px 7px;border-radius:99px;font-weight:600;margin-left:6px}
+.ev{display:flex;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.seg{display:inline-flex;background:var(--bg);border-radius:10px;padding:3px;border:1px solid var(--line)}.seg button{border:0;background:none;padding:6px 14px;border-radius:8px;font:600 12.5px Inter;color:var(--mut);cursor:pointer}.seg button.on{background:#fff;color:var(--p);box-shadow:var(--sh)}
+.att{display:inline-flex;gap:4px}.att i{width:9px;height:9px;border-radius:50%;background:var(--bad)}.att i.g{background:var(--ok)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;opacity:0;transition:.25s;z-index:40}.toast.on{opacity:1;transform:translate(-50%,0)}
+.badge2{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:11px;padding:3px 9px;border-radius:99px;background:var(--pl);color:var(--p);margin-bottom:8px}.badge2.live{background:var(--okb);color:var(--ok)}
+.wf{display:flex;height:10px;border-radius:99px;overflow:hidden;gap:2px;margin:8px 0 6px}.wf div{min-width:4px}.why{padding:16px 20px;margin-bottom:18px}.bar{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:12.5px}.bar span{width:210px;color:var(--mut)}.bar i{display:block;height:8px;border-radius:99px;background:var(--bad);opacity:.85}
+.empty{padding:40px;text-align:center;color:var(--mut)}
+.author{position:fixed;top:18px;right:28px;z-index:12;display:inline-flex;align-items:center;gap:10px;padding:7px 9px 7px 12px;border:1px solid rgba(229,233,242,.95);border-radius:999px;background:rgba(255,255,255,.9);box-shadow:0 6px 20px rgba(16,24,40,.08);color:var(--mut);font-size:12px;font-weight:500;text-decoration:none;backdrop-filter:blur(12px);transition:.18s}
+.author:before{content:'';width:7px;height:7px;border-radius:50%;background:var(--p);box-shadow:0 0 0 4px var(--pl)}
+.author strong{color:var(--ink);font-weight:700}.author span{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--pl);color:var(--p);font-size:11px;font-weight:700;transition:.18s}
+.author:hover{border-color:var(--pb);color:var(--p);box-shadow:0 8px 24px rgba(43,98,255,.14);transform:translateY(-1px)}.author:hover span{background:var(--p);color:#fff}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{display:none}.stats{grid-template-columns:1fr 1fr}.launch{grid-template-columns:1fr}main{padding:72px 20px 20px}.author{top:14px;right:16px}}
+@media(max-width:520px){.author{font-size:11px;padding:6px 8px 6px 10px}.author span{display:none}.stats{grid-template-columns:1fr}.author:before{width:6px;height:6px}}
+</style></head>
+<body><div class="app">
+<aside>
+  <div class="logo"><i><b></b></i>Flightdeck</div>
+  <nav>
+    <button data-v="fleet" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Bot fleet</button>
+    <button data-v="hooks"><svg viewBox="0 0 24 24"><path d="M4 12h4l3-8 4 16 3-8h2"/></svg>Webhooks</button>
+  </nav>
+  <div class="foot" id="foot"><b style="color:var(--ink)">Prototype for Recall.ai</b><br>Simulated Meeting Bot API: real lifecycle codes, signed webhooks, retries and replay.</div>
+</aside>
+<a class="author" href="https://gauravjain.vercel.app/" target="_blank" rel="noopener noreferrer" aria-label="Open Gaurav Jain's portfolio">
+  Built by <strong>Gaurav Jain</strong><span aria-hidden="true">↗</span>
+</a>
+<main id="main"></main></div>
+<div class="ov" id="ov"></div><div class="drawer" id="dr"></div><div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const S={bots:new Map(),dl:[],stats:{},detail:null,tab:'transcript',view:'fleet',scenario:'normal',url:'https://zoom.us/j/84920137561',open:new Set()};
+const STAGES=[['joining_call','Joining'],['in_waiting_room','Lobby'],['in_call_not_recording','In call'],['recording_permission_allowed','Allowed'],['in_call_recording','Recording'],['done','Done']];
+const LABEL={ready:'Ready',joining_call:'Joining',in_waiting_room:'Waiting room',in_call_not_recording:'In call',recording_permission_allowed:'Permission granted',in_call_recording:'Recording',call_ended:'Call ended',done:'Done',fatal:'Fatal'};
+const PLAT={zoom:['Zoom','Z'],google_meet:['Google Meet','M'],microsoft_teams:['Teams','T'],unknown:['Unknown','?']};
+const COL=['#2B62FF','#12A150','#E0891B','#8B5CF6'];
+const SCEN=[['normal','Happy path'],['waiting_room','Host never admits'],['denied','Recording denied'],['bad_link','Bad meeting link']];
+const ago=t=>{const s=(Date.now()-t)/1000;return s<60?'just now':s<3600?Math.floor(s/60)+'m ago':Math.floor(s/3600)+'h ago'};
+const pct=v=>v==null?'—':Math.round(v*100)+'%';
+const pill=(c)=>{const k=c==='fatal'?'bad':c==='done'?'ok':c==='in_call_recording'?'rec':'warn';return `<span class="pill ${k}"><i class="dot ${['done','fatal'].includes(c)?'':'pulse'}"></i>${LABEL[c]||c}</span>`};
+const initials=n=>n.split(' ').map(x=>x[0]).join('');
+
+async function api(p,o){const r=await fetch(p,o);return r.json()}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),2200)}
+
+function curl(){return `<span class="k">curl</span> -X POST https://us-east-1.recall.ai/api/v1/bot \\
+  -H <span class="s">"Authorization: Token $RECALL_API_KEY"</span> \\
+  -d <span class="s">'{"meeting_url":"${esc(S.url)}",
+       "bot_name":"Flightdeck Notetaker",
+       "automatic_leave":{"waiting_room_timeout":600}}'</span>`}
+
+function fleet(){
+  const st=S.stats,bots=[...S.bots.values()].sort((a,b)=>b.created_at-a.created_at);
+  return `<div class="row"><div><h1>Bot fleet</h1><p class="sub">Every bot, every state change, every failure — with the reason and the fix.</p></div></div>
+  <div class="stats">
+   <div class="card stat"><small>Active bots</small><b>${st.active??0}</b><span>${st.total??0} launched total</span></div>
+   <div class="card stat"><small>Bot success rate</small><b>${pct(st.success_rate)}</b><span>finished without a fatal</span></div>
+   <div class="card stat"><small>Median time to recording</small><b>${st.median_join_ms?(st.median_join_ms/1000).toFixed(1)+'s':'—'}</b><span>join → recording</span></div>
+   <div class="card stat"><small>Webhook delivery</small><b>${pct(st.delivery_rate)}</b><span>${st.retries??0} retries so far</span></div>
+  </div>
+  ${(()=>{const c={};bots.filter(b=>b.status==='fatal').forEach(b=>c[b.sub_code]=(c[b.sub_code]||0)+1);const k=Object.entries(c);if(!k.length)return '';const mx=Math.max(...k.map(x=>x[1]));
+   return `<div class="card why"><b>Why bots fail</b><span class="mut"> · by fatal sub_code</span>${k.map(([n,v])=>`<div class="bar"><span class="mono">${n}</span><i style="width:${v/mx*260}px"></i><b>${v}</b></div>`).join('')}</div>`})()}
+  <div class="card launch">
+   <div><div style="font-weight:700;font-size:15px">Launch a bot</div><p class="mut" style="margin:2px 0 14px">Pick a failure mode to see how Flightdeck diagnoses it.</p>
+    <label>Meeting URL</label><input id="url" value="${esc(S.url)}">
+    <div class="chips">${SCEN.map(([k,l])=>`<span class="chip ${S.scenario===k?'on':''}" data-sc="${k}">${l}</span>`).join('')}</div>
+    <button class="btn" id="go">Send bot to meeting →</button></div>
+   <div><label>Equivalent API call</label><pre id="curl">${curl()}</pre></div>
+  </div>
+  <div class="card"><table><thead><tr><th>Meeting</th><th>Status</th><th>Transcript</th><th>Started</th></tr></thead><tbody>
+  ${bots.map(b=>`<tr data-bot="${b.id}"><td><div class="row"><span class="plat">${PLAT[b.platform][1]}</span><div><b>${PLAT[b.platform][0]}</b><div class="mono mut">${b.id}</div></div></div></td>
+   <td>${pill(b.status)}${b.sub_code?`<div class="mono mut" style="margin-top:4px">${b.sub_code}</div>`:''}</td><td class="mut">${b.lines} lines</td><td class="mut">${ago(b.created_at)}</td></tr>`).join('')||`<tr><td colspan="4" class="empty">No bots yet.</td></tr>`}
+  </tbody></table></div>`}
+
+function hooks(){
+  const m=S.stats.receiver||'healthy',list=S.dl,lv=S.stats.live;
+  return `<div class="row"><div><h1>Webhooks</h1><p class="sub">Signed deliveries, automatic retries with backoff, and one-click replay.</p></div></div>
+  ${lv?`<div class="card" style="padding:18px 20px;margin-bottom:18px"><b>Receiving real Recall webhooks</b><div class="mut" style="margin:4px 0 10px">Expose this app with a tunnel, then add the URL in your Recall dashboard → Webhooks. Signatures are verified when RECALL_WEBHOOK_SECRET is set.</div><pre>POST  https://&lt;your-tunnel&gt;/hooks/recall</pre></div>`:
+  `<div class="card" style="padding:18px 20px;margin-bottom:18px;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+   <div><b>Your endpoint's behaviour</b><div class="mut">Break it on purpose and watch the retries recover.</div></div><div class="sp"></div>
+   <div class="seg">${['healthy','flaky','down'].map(x=>`<button data-rx="${x}" class="${m===x?'on':''}">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}</div></div>`}
+  <div class="card"><table><thead><tr><th>Event</th><th>Bot</th><th>Attempts</th><th>State</th><th></th></tr></thead><tbody>
+  ${list.map(d=>`<tr data-d="${d.id}"><td><b class="mono">${d.event}</b></td><td class="mono mut">${d.botId.slice(0,12)}</td>
+   <td><span class="att">${d.attempts.map(a=>`<i class="${a.status>=200&&a.status<300?'g':''}" title="${a.status||a.error}"></i>`).join('')}</span></td>
+   <td><span class="pill ${d.state==='delivered'?'ok':d.state==='failed'?'bad':'warn'}">${d.state}</span></td>
+   <td style="text-align:right">${d.live?'':`<button class="btn ghost sm" data-replay="${d.id}">Replay</button>`}</td></tr>
+   ${S.open.has(d.id)?`<tr><td colspan="5" style="background:#FAFBFF"><div class="row" style="align-items:flex-start;gap:20px"><pre style="flex:1">${esc(JSON.stringify(d.payload,null,2))}</pre>
+    <div style="flex:1">${d.attempts.map(a=>`<div class="ev"><span class="pill ${a.status>=200&&a.status<300?'ok':'bad'}">${a.status||'ERR'}</span><span class="mono">attempt ${a.n} · ${a.ms}ms</span></div>`).join('')}
+    <p class="mut" style="font-size:12px">Signed with HMAC-SHA256 over <span class="mono">id.timestamp.body</span>. Your endpoint de-dupes on <span class="mono">webhook-id</span>, so replays are safe.</p></div></div></td></tr>`:''}`).join('')||`<tr><td colspan="5" class="empty">Launch a bot — its status changes will show up here as webhooks.</td></tr>`}
+  </tbody></table></div>`}
+
+function drawer(){
+  const b=S.detail;if(!b)return '';
+  const reached=new Set(b.status_changes.map(e=>e.code)),fatal=b.status==='fatal',live=!['done','fatal'].includes(b.status);
+  let marked=false;const stg=STAGES.map(([c,l])=>{let k='';if(reached.has(c))k='ok';else if(!marked){marked=true;k=fatal?'bad':'now'}
+    return `<div class="stp ${k}"><i>${k==='ok'?'✓':k==='bad'?'!':''}</i>${l}</div>`}).join('');
+  const words={};b.transcript.forEach(l=>words[l.speaker_id]=(words[l.speaker_id]||0)+l.text.split(' ').length);
+  const tot=Object.values(words).reduce((a,c)=>a+c,0)||1,names={};b.transcript.forEach(l=>names[l.speaker_id]=l.speaker);
+  const tr=b.transcript.length?`<div class="row" style="margin-bottom:4px"><b>${b.transcript.length} utterances</b><div class="sp"></div><button class="btn ghost sm" id="dl">Download .md</button></div><div class="share">${Object.keys(words).map(i=>`<div style="width:${words[i]/tot*100}%;background:${COL[i]}"></div>`).join('')}</div>
+   <div class="leg">${Object.keys(words).map(i=>`<span><i style="background:${COL[i]}"></i>${names[i]} ${Math.round(words[i]/tot*100)}%</span>`).join('')}</div>
+   ${b.transcript.map(l=>`<div class="ln ${l.overlap&&l.speaker_id!==Math.min(...b.transcript.filter(x=>x.t===l.t).map(x=>x.speaker_id))?'ov2':''}"><div class="av" style="background:${COL[l.speaker_id]}">${initials(l.speaker)}</div>
+    <div><b>${l.speaker}</b><span class="mut mono"> ${String(Math.floor(l.t/60)).padStart(2,'0')}:${String(l.t%60).padStart(2,'0')}</span>${l.overlap?'<span class="badge">spoke simultaneously</span>':''}<div>${esc(l.text)}</div></div></div>`).join('')}`
+   :`<div class="empty">${fatal?'Bot never reached the recording state — no transcript.':live?'Waiting for the bot to start recording…':'No transcript.'}</div>`;
+  const sc=b.status_changes,du=sc.slice(1).map((e,i)=>({c:sc[i].code,ms:e.created_at-sc[i].created_at})),tm=du.reduce((a,d)=>a+d.ms,0)||1;
+  const wf=du.length?`<div style="margin-top:14px"><b>Where the time went</b><span class="mut"> · ${(tm/1000).toFixed(1)}s total</span><div class="wf">${du.map((d,i)=>`<div title="${LABEL[d.c]}" style="flex:${d.ms};background:${d.c==='in_waiting_room'&&b.status==='fatal'?'var(--bad)':`rgba(43,98,255,${.35+.65*i/du.length})`}"></div>`).join('')}</div>
+   <div class="leg">${du.map(d=>`<span>${LABEL[d.c]} ${(d.ms/1000).toFixed(1)}s</span>`).join('')}</div></div>`:'';
+  const ev=b.status_changes.map(e=>`<div class="ev"><span class="mono mut">${new Date(e.created_at).toLocaleTimeString()}</span><span class="mono"><b>bot.${e.code}</b>${e.sub_code?' · '+e.sub_code:''}</span></div>`).join('');
+  return `<div class="dh"><div class="row"><span class="plat">${PLAT[b.platform][1]}</span><div><b style="font-size:16px">${PLAT[b.platform][0]} meeting</b><div class="mono mut">${b.id}</div></div><div class="sp"></div>${pill(b.status)}<button class="btn ghost sm" id="x">✕</button></div>
+   <div class="steps">${stg}</div>${wf}</div>
+   <div class="db">${b.diagnosis?`<div class="diag"><b>Why it failed</b><p style="margin:6px 0">${b.diagnosis.cause}</p><b style="color:var(--ink)">How to fix</b><p style="margin:6px 0 0">${b.diagnosis.fix}</p></div>`:''}
+   <div class="tabs"><button class="tab ${S.tab==='transcript'?'on':''}" data-tab="transcript">Transcript</button><button class="tab ${S.tab==='events'?'on':''}" data-tab="events">Status events</button></div>
+   <div id="tabbody">${S.tab==='transcript'?tr:ev}</div></div>`}
+
+function foot(){const l=S.stats.live;$('#foot').innerHTML=`<span class="badge2 ${l?'live':''}"><i class="dot ${l?'pulse':''}"></i>${l?'LIVE · '+S.stats.region:'SIMULATED'}</span><br><b style="color:var(--ink)">Built for Recall.ai</b><br>${l?'Talking to the real Meeting Bot API.':'Run with RECALL_API_KEY to use real bots.'}`}
+function paint(){foot();
+  $('#main').innerHTML=S.view==='fleet'?fleet():hooks();
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.v===S.view));
+  paintDrawer()}
+function paintDrawer(){const d=$('#dr'),keep=d.querySelector('.db');const top=keep?keep.scrollTop:0;
+  d.innerHTML=drawer();d.classList.toggle('on',!!S.detail);$('#ov').classList.toggle('on',!!S.detail);
+  const nb=d.querySelector('.db');if(nb)nb.scrollTop=S.tab==='transcript'&&S.detail&&!['done','fatal'].includes(S.detail.status)?nb.scrollHeight:top}
+async function openBot(id){S.detail=await api('/api/bots/'+id);paint()}
+
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-v],[data-sc],#go,[data-bot],[data-rx],[data-replay],[data-d],[data-tab],#x,#ov,#dl');if(!t)return;
+  if(t.dataset.v){S.view=t.dataset.v;return paint()}
+  if(t.dataset.sc){S.scenario=t.dataset.sc;S.url=$('#url').value;return paint()}
+  if(t.id==='go'){S.url=$('#url').value;const b=await api('/api/bots',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({meeting_url:S.url,scenario:S.scenario})});if(b.error)return toast(b.error);toast('Bot dispatched');return openBot(b.id)}
+  if(t.dataset.replay){e.stopPropagation();await api(`/api/deliveries/${t.dataset.replay}/replay`,{method:'POST'});return toast('Replaying delivery…')}
+  if(t.dataset.d){S.open.has(t.dataset.d)?S.open.delete(t.dataset.d):S.open.add(t.dataset.d);return paint()}
+  if(t.dataset.bot)return openBot(t.dataset.bot);
+  if(t.dataset.rx){await api('/api/receiver',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mode:t.dataset.rx})});S.stats=await api('/api/stats');return paint()}
+  if(t.id==='dl'){const b=S.detail,f=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');const md=`# Meeting transcript (${b.id})\n\n`+b.transcript.map(l=>`**${l.speaker}** [${f(l.t)}]: ${l.text}`).join('\n\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));a.download='transcript-'+b.id+'.md';a.click();return}
+  if(t.dataset.tab){S.tab=t.dataset.tab;return paintDrawer()}
+  if(t.id==='x'||t.id==='ov'){S.detail=null;paintDrawer()}
+});
+document.addEventListener('input',e=>{if(e.target.id==='url'){S.url=e.target.value;$('#curl').innerHTML=curl()}});
+
+function live(){const es=new EventSource('/api/stream');es.onmessage=async m=>{const {type,data}=JSON.parse(m.data);
+  if(type==='bot'){S.bots.set(data.id,data);if(S.detail&&S.detail.id===data.id){const d=await api('/api/bots/'+data.id);S.detail=d}S.stats=await api('/api/stats')}
+  if(type==='line'&&S.detail&&S.detail.id===data.bot_id&&!S.detail.transcript.find(l=>l.id===data.line.id))S.detail.transcript.push(data.line);
+  if(type==='delivery'){const i=S.dl.findIndex(x=>x.id===data.id);i<0?S.dl.unshift(data):S.dl[i]=data}
+  if(type==='stats')S.stats=data;
+  paint()}}
+(async()=>{(await api('/api/bots')).forEach(b=>S.bots.set(b.id,b));S.dl=await api('/api/deliveries');S.stats=await api('/api/stats');paint();live()})();
+</script></body></html>

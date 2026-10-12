@@ -1,0 +1,1 @@
+{"name":"flightdeck","version":"1.0.0","description":"Bot-fleet observability and webhook debugger for Recall.ai-style APIs","scripts":{"start":"node server.js"},"engines":{"node":">=18"}}
